@@ -1,7 +1,8 @@
 module org.dynamisterrain.physics {
     requires org.dynamisterrain.api;
     requires org.dynamisterrain.core;
-    requires org.dynamiscollision;
+    // TODO: restore when DynamisCollision JPMS module is available
+    // requires org.dynamiscollision;
     // TODO: restore when DynamisPhysics extracted
     // requires org.dynamisphysics.api;
 

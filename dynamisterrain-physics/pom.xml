@@ -18,10 +18,13 @@
       <groupId>org.dynamisterrain</groupId>
       <artifactId>dynamisterrain-core</artifactId>
     </dependency>
+    <!-- TODO: restore when DynamisCollision artifact is available locally -->
+    <!--
     <dependency>
       <groupId>org.dynamiscollision</groupId>
       <artifactId>dynamis-collision</artifactId>
     </dependency>
+    -->
     <!-- TODO: restore when DynamisPhysics extracted -->
     <!--
     <dependency>
