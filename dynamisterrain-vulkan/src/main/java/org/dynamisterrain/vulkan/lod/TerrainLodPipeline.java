@@ -2,11 +2,15 @@ package org.dynamisterrain.vulkan.lod;
 
 import org.dynamisterrain.vulkan.GpuMemoryOps;
 import org.dynamisterrain.vulkan.TerrainGpuContext;
+import org.dynamisterrain.vulkan.material.TerrainDrawPipeline;
+import org.dynamisterrain.vulkan.material.TerrainMaterialDescriptorSets;
+import org.dynamisterrain.core.lod.Matrix4f;
 
 public final class TerrainLodPipeline {
     private final CdlodSelectionPass selectionPass;
     private final CdlodTessellationPass tessellationPass;
     private final SilhouetteCorrectionPass silhouettePass;
+    private TerrainDrawPipeline drawPipeline;
 
     private TerrainLodPipeline(
         final CdlodSelectionPass selectionPass,
@@ -60,5 +64,26 @@ public final class TerrainLodPipeline {
         this.selectionPass.destroy();
         this.tessellationPass.destroy();
         this.silhouettePass.destroy();
+        if (this.drawPipeline != null) {
+            this.drawPipeline.destroy();
+            this.drawPipeline = null;
+        }
+    }
+
+    public void attachDrawPipeline(final TerrainDrawPipeline drawPipeline) {
+        this.drawPipeline = drawPipeline;
+    }
+
+    public void recordDraw(
+        final long commandBuffer,
+        final TerrainGpuLodResources lodResources,
+        final TerrainMaterialDescriptorSets descriptorSets,
+        final Matrix4f viewProj,
+        final int frameIndex
+    ) {
+        if (this.drawPipeline == null) {
+            return;
+        }
+        this.drawPipeline.record(commandBuffer, lodResources, descriptorSets, frameIndex);
     }
 }
