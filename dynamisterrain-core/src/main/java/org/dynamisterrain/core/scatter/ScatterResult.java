@@ -1,0 +1,10 @@
+package org.dynamisterrain.core.scatter;
+
+import java.util.List;
+
+public record ScatterResult(
+    List<ScatterPoint> points,
+    int count,
+    int layerIndex
+) {
+}

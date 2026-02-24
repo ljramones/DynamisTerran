@@ -5,4 +5,7 @@ module org.dynamisterrain.core {
     exports org.dynamisterrain.core;
     exports org.dynamisterrain.core.heightmap;
     exports org.dynamisterrain.core.lod;
+    exports org.dynamisterrain.core.flow;
+    exports org.dynamisterrain.core.scatter;
+    exports org.dynamisterrain.core.material;
 }
