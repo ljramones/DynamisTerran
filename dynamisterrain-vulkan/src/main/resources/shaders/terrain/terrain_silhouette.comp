@@ -1,0 +1,82 @@
+#version 450
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+struct DrawIndirectCommand {
+    uint vertexCount;
+    uint instanceCount;
+    uint firstVertex;
+    uint firstInstance;
+};
+
+struct CdlodPatch {
+    float worldX, worldZ, patchSize;
+    int   lodLevel;
+    float lodSwitchDist;
+    float pad0, pad1, pad2;
+};
+
+layout(set=0, binding=0) uniform sampler2D previousDepth;
+layout(set=0, binding=1) readonly buffer VisiblePatchBuffer { CdlodPatch visible[]; };
+layout(set=0, binding=2) buffer IndirectDrawBuf { DrawIndirectCommand draws[]; };
+
+layout(set=0, binding=3) uniform SilhouetteUBO {
+    vec2  viewportSize;
+    float silhouetteThreshold;
+    float maxSubdivMultiplier;
+    vec3  cameraPos;
+    float nearPlane;
+    float farPlane;
+    float pad0, pad1;
+};
+
+layout(push_constant) uniform PushConstants {
+    mat4 viewProj;
+};
+
+bool isSilhouetteEdge(vec2 screenUV) {
+    vec2 texelSize = 1.0 / viewportSize;
+    float d0 = texture(previousDepth, screenUV).r;
+    float dN = texture(previousDepth, screenUV + vec2(0,  texelSize.y)).r;
+    float dS = texture(previousDepth, screenUV + vec2(0, -texelSize.y)).r;
+    float dE = texture(previousDepth, screenUV + vec2( texelSize.x, 0)).r;
+    float dW = texture(previousDepth, screenUV + vec2(-texelSize.x, 0)).r;
+
+    float maxDiff = max(max(abs(d0-dN), abs(d0-dS)),
+                        max(abs(d0-dE), abs(d0-dW)));
+    return maxDiff > silhouetteThreshold;
+}
+
+void main() {
+    uint patchIdx = gl_GlobalInvocationID.x
+                  + gl_GlobalInvocationID.y * 8u;
+
+    CdlodPatch patch = visible[patchIdx];
+
+    vec3 corners[4] = vec3[](
+        vec3(patch.worldX,                   0, patch.worldZ),
+        vec3(patch.worldX + patch.patchSize, 0, patch.worldZ),
+        vec3(patch.worldX,                   0, patch.worldZ + patch.patchSize),
+        vec3(patch.worldX + patch.patchSize, 0, patch.worldZ + patch.patchSize)
+    );
+
+    bool hasSilhouette = false;
+    for (int i = 0; i < 4; i++) {
+        vec4 clip = viewProj * vec4(corners[i], 1.0);
+        vec2 ndc  = clip.xy / clip.w;
+        vec2 uv   = ndc * 0.5 + 0.5;
+        if (uv.x >= 0.0 && uv.x <= 1.0 && uv.y >= 0.0 && uv.y <= 1.0) {
+            if (isSilhouetteEdge(uv)) {
+                hasSilhouette = true;
+                break;
+            }
+        }
+    }
+
+    if (hasSilhouette) {
+        uint currentCount = draws[patchIdx].vertexCount;
+        uint patchSide    = uint(sqrt(float(currentCount)));
+        uint newSide      = min(uint(float(patchSide) * maxSubdivMultiplier),
+                                uint(float(patchSide) * maxSubdivMultiplier));
+        draws[patchIdx].vertexCount = newSide * newSide;
+    }
+}

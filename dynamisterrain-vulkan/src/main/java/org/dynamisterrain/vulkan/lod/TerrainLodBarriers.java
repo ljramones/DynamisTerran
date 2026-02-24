@@ -11,4 +11,8 @@ public final class TerrainLodBarriers {
     public static void tessellationToDraw(final long commandBuffer, final TerrainGpuLodResources res) {
         // No-op in scaffold backend; explicit barriers are applied in real Vulkan backend.
     }
+
+    public static void silhouetteToIndirectDraw(final long commandBuffer, final TerrainGpuLodResources res) {
+        // No-op in scaffold backend; explicit barriers are applied in real Vulkan backend.
+    }
 }

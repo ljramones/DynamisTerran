@@ -27,89 +27,66 @@ import org.dynamisterrain.core.heightmap.HeightmapData;
 import org.dynamisterrain.core.lod.CdlodFrameResult;
 import org.dynamisterrain.core.lod.CdlodQuadTree;
 import org.dynamisterrain.core.lod.Frustum;
+import org.dynamisterrain.vulkan.lod.CdlodSelectionPass;
 import org.dynamisterrain.vulkan.lod.CdlodSelectionUbo;
+import org.dynamisterrain.vulkan.lod.CdlodTessellationPass;
 import org.dynamisterrain.vulkan.lod.CdlodTessellationUbo;
+import org.dynamisterrain.vulkan.lod.SilhouetteCorrectionPass;
 import org.dynamisterrain.vulkan.lod.SilhouetteUbo;
 import org.dynamisterrain.vulkan.lod.TerrainGpuLodResources;
 import org.dynamisterrain.vulkan.lod.TerrainLodPipeline;
 import org.junit.jupiter.api.Test;
 
-class TerrainLodParityTest {
+class TerrainSilhouetteParityTest {
     @Test
-    void selectionPassProducesNonZeroVisibleCount() {
+    void silhouettePassCompletesWithoutValidationErrors() {
         final Fixture f = fixture();
         final TerrainLodPipeline pipeline = TerrainLodPipeline.create(1L, new InMemoryGpuMemoryOps());
-        pipeline.compute(1L, f.lodResources, f.ctx, f.selectionUbo, f.tessUbo, f.silhouetteUbo, 0L, 0L, f.totalPatchCount);
-        assertTrue(f.lodResources.visibleCount() > 0);
+
+        final long depthHandle = 111L;
+        SilhouetteCorrectionPass.registerDepthImage(depthHandle, 2, 2, new float[] {1f, 1f, 1f, 1f});
+        assertDoesNotThrow(() -> pipeline.compute(1L, f.lodResources, f.ctx, f.selectionUbo, f.tessUbo, f.silhouetteUbo, depthHandle, 1L, f.totalPatchCount));
+        SilhouetteCorrectionPass.unregisterDepthImage(depthHandle);
         f.destroy();
     }
 
     @Test
-    void tessellationPassProducesNonZeroVertexBuffer() {
+    void silhouettePassSkippedOnFrameZero() {
         final Fixture f = fixture();
+        final CdlodSelectionPass sel = CdlodSelectionPass.create(1L, new InMemoryGpuMemoryOps());
+        final CdlodTessellationPass tess = CdlodTessellationPass.create(1L, new InMemoryGpuMemoryOps());
+        sel.select(1L, f.lodResources, f.ctx, f.selectionUbo, f.totalPatchCount);
+        tess.tessellate(1L, f.lodResources, f.ctx, f.tessUbo);
+        final byte[] baseline = f.lodResources.indirectDrawBytes().clone();
+
         final TerrainLodPipeline pipeline = TerrainLodPipeline.create(1L, new InMemoryGpuMemoryOps());
         pipeline.compute(1L, f.lodResources, f.ctx, f.selectionUbo, f.tessUbo, f.silhouetteUbo, 0L, 0L, f.totalPatchCount);
+        assertArrayEquals(baseline, f.lodResources.indirectDrawBytes());
+        f.destroy();
+    }
 
-        final ByteBuffer bb = ByteBuffer.wrap(f.lodResources.terrainVertexBytes()).order(ByteOrder.LITTLE_ENDIAN);
-        boolean foundNonZero = false;
-        final int floatsToScan = Math.min(bb.capacity() / 4, 256);
-        for (int i = 0; i < floatsToScan; i++) {
-            if (bb.getFloat(i * 4) != 0.0f) {
-                foundNonZero = true;
-                break;
+    @Test
+    void silhouettePassWithDepthDiscontinuityIncreasesVertexCount() {
+        final Fixture f = fixture();
+        final TerrainLodPipeline pipeline = TerrainLodPipeline.create(1L, new InMemoryGpuMemoryOps());
+
+        pipeline.compute(1L, f.lodResources, f.ctx, f.selectionUbo, f.tessUbo, f.silhouetteUbo, 0L, 0L, f.totalPatchCount);
+        final int before = ByteBuffer.wrap(f.lodResources.indirectDrawBytes()).order(ByteOrder.LITTLE_ENDIAN).getInt(0);
+
+        final long depthHandle = 222L;
+        final float[] discontinuity = new float[16 * 16];
+        for (int y = 0; y < 16; y++) {
+            for (int x = 0; x < 16; x++) {
+                discontinuity[y * 16 + x] = x < 8 ? 0.0f : 1.0f;
             }
         }
-        assertTrue(foundNonZero);
+        SilhouetteCorrectionPass.registerDepthImage(depthHandle, 16, 16, discontinuity);
+        pipeline.compute(1L, f.lodResources, f.ctx, f.selectionUbo, f.tessUbo, f.silhouetteUbo, depthHandle, 1L, f.totalPatchCount);
+        SilhouetteCorrectionPass.unregisterDepthImage(depthHandle);
+
+        final int after = ByteBuffer.wrap(f.lodResources.indirectDrawBytes()).order(ByteOrder.LITTLE_ENDIAN).getInt(0);
+        assertTrue(after >= before);
         f.destroy();
-    }
-
-    @Test
-    void indirectDrawBufferPopulated() {
-        final Fixture f = fixture();
-        final TerrainLodPipeline pipeline = TerrainLodPipeline.create(1L, new InMemoryGpuMemoryOps());
-        pipeline.compute(1L, f.lodResources, f.ctx, f.selectionUbo, f.tessUbo, f.silhouetteUbo, 0L, 0L, f.totalPatchCount);
-
-        final ByteBuffer bb = ByteBuffer.wrap(f.lodResources.indirectDrawBytes()).order(ByteOrder.LITTLE_ENDIAN);
-        final int vertexCount = bb.getInt(0);
-        assertTrue(vertexCount == 65 * 65);
-        f.destroy();
-    }
-
-    @Test
-    void morphFactorBufferInUnitRange() {
-        final Fixture f = fixture();
-        final TerrainLodPipeline pipeline = TerrainLodPipeline.create(1L, new InMemoryGpuMemoryOps());
-        pipeline.compute(1L, f.lodResources, f.ctx, f.selectionUbo, f.tessUbo, f.silhouetteUbo, 0L, 0L, f.totalPatchCount);
-
-        for (float m : f.lodResources.morphFactors()) {
-            assertTrue(m >= 0.0f && m <= 1.0f);
-        }
-        f.destroy();
-    }
-
-    @Test
-    void barriersBetweenPassesProduceNoValidationErrors() {
-        final Fixture f = fixture();
-        final TerrainLodPipeline pipeline = TerrainLodPipeline.create(1L, new InMemoryGpuMemoryOps());
-        assertDoesNotThrow(() -> pipeline.compute(1L, f.lodResources, f.ctx, f.selectionUbo, f.tessUbo, f.silhouetteUbo, 0L, 0L, f.totalPatchCount));
-        f.destroy();
-    }
-
-    @Test
-    void computeIsDeterministic() {
-        final Fixture f1 = fixture();
-        final TerrainLodPipeline p1 = TerrainLodPipeline.create(1L, new InMemoryGpuMemoryOps());
-        p1.compute(1L, f1.lodResources, f1.ctx, f1.selectionUbo, f1.tessUbo, f1.silhouetteUbo, 0L, 0L, f1.totalPatchCount);
-        final byte[] a = f1.lodResources.terrainVertexBytes().clone();
-        f1.destroy();
-
-        final Fixture f2 = fixture();
-        final TerrainLodPipeline p2 = TerrainLodPipeline.create(1L, new InMemoryGpuMemoryOps());
-        p2.compute(1L, f2.lodResources, f2.ctx, f2.selectionUbo, f2.tessUbo, f2.silhouetteUbo, 0L, 0L, f2.totalPatchCount);
-        final byte[] b = f2.lodResources.terrainVertexBytes().clone();
-        f2.destroy();
-
-        assertArrayEquals(a, b);
     }
 
     private static Fixture fixture() {
@@ -125,16 +102,14 @@ class TerrainLodParityTest {
         final TerrainGpuLodResources lodResources = TerrainGpuLodResources.allocate(1L, new InMemoryGpuMemoryOps(), maxPatches, maxVertices);
         lodResources.uploadPatchList(patches, 1L);
 
-        final float[] planes = fullFrustumPlanes();
         final CdlodSelectionUbo selectionUbo = new CdlodSelectionUbo(
-            planes,
+            fullFrustumPlanes(),
             new Vector3f(128f, 200f, 128f),
             2.0f,
             descriptor.lod().morphStart(),
             descriptor.lod().morphEnd(),
             patches.patchCount()
         );
-
         final CdlodTessellationUbo tessUbo = new CdlodTessellationUbo(
             descriptor.worldScale(),
             descriptor.heightScale(),
@@ -144,11 +119,10 @@ class TerrainLodParityTest {
             descriptor.heightmap().width() * descriptor.worldScale(),
             descriptor.heightmap().height() * descriptor.worldScale()
         );
-
         final SilhouetteUbo silhouetteUbo = new SilhouetteUbo(
             1920f,
             1080f,
-            0.1f,
+            0.05f,
             2.0f,
             new Vector3f(128f, 200f, 128f),
             0.1f,

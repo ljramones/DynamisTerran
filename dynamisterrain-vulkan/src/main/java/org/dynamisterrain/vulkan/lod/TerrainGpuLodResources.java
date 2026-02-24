@@ -128,6 +128,10 @@ public final class TerrainGpuLodResources {
         return this.indirectDrawBuffer.data();
     }
 
+    void overwriteIndirectDrawBytes(final byte[] draws) {
+        this.indirectDrawBuffer.upload(draws);
+    }
+
     public byte[] indirectDispatchBytes() {
         return this.indirectDispatchBuffer.data();
     }
