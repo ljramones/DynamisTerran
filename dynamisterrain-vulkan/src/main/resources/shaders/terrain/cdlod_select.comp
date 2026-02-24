@@ -1,0 +1,65 @@
+#version 450
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+struct CdlodPatch {
+    float worldX, worldZ;
+    float patchSize;
+    int   lodLevel;
+    float lodSwitchDist;
+    float pad0, pad1, pad2;
+};
+
+layout(set=0, binding=0) uniform sampler2D heightmapTex;
+layout(set=0, binding=1) readonly buffer PatchListBuffer   { CdlodPatch patches[]; };
+layout(set=0, binding=2) writeonly buffer VisiblePatchBuffer { CdlodPatch visible[]; };
+layout(set=0, binding=3) writeonly buffer MorphFactorBuffer  { float morphFactors[]; };
+layout(set=0, binding=4) buffer IndirectDispatchBuffer       { uint dispatchX; uint dispatchY; uint dispatchZ; };
+
+layout(set=0, binding=5) uniform CdlodSelectionUBO {
+    vec4  frustumPlanes[6];
+    vec3  cameraPos;
+    float screenSpaceError;
+    float morphStart;
+    float morphEnd;
+    int   totalPatchCount;
+    float pad;
+};
+
+layout(std430) buffer VisibleCount { uint visibleCount; };
+
+bool frustumCull(vec3 center, float radius) {
+    for (int i = 0; i < 6; i++) {
+        if (dot(frustumPlanes[i].xyz, center) + frustumPlanes[i].w < -radius)
+            return true;
+    }
+    return false;
+}
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+    if (idx >= uint(totalPatchCount)) return;
+
+    CdlodPatch patch = patches[idx];
+    vec3 patchCenter = vec3(patch.worldX + patch.patchSize * 0.5, 0.0,
+                            patch.worldZ + patch.patchSize * 0.5);
+
+    vec2 uv = vec2(patch.worldX, patch.worldZ) / vec2(textureSize(heightmapTex, 0));
+    float centreHeight = texture(heightmapTex, uv).r;
+    patchCenter.y = centreHeight * 0.5;
+    float radius = length(vec3(patch.patchSize * 0.5, centreHeight, patch.patchSize * 0.5));
+
+    if (frustumCull(patchCenter, radius)) return;
+
+    float dist = distance(cameraPos, patchCenter);
+    float mStart = patch.lodSwitchDist * morphStart;
+    float mEnd   = patch.lodSwitchDist * morphEnd;
+    float morph  = clamp((dist - mStart) / (mEnd - mStart), 0.0, 1.0);
+
+    uint slot = atomicAdd(visibleCount, 1u);
+    visible[slot] = patch;
+    morphFactors[slot] = morph;
+
+    atomicMax(dispatchX, slot + 1u);
+    dispatchY = 1u;
+    dispatchZ = 1u;
+}

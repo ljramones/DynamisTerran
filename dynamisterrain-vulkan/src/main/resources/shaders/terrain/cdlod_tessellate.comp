@@ -1,0 +1,88 @@
+#version 450
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+struct CdlodPatch {
+    float worldX, worldZ, patchSize;
+    int   lodLevel;
+    float lodSwitchDist;
+    float pad0, pad1, pad2;
+};
+
+struct TerrainVertex {
+    vec3  position; float pad0;
+    vec3  normal;   float pad1;
+    vec2  uv;
+    float morphFactor; float pad2;
+};
+
+struct DrawIndirectCommand {
+    uint vertexCount, instanceCount, firstVertex, firstInstance;
+};
+
+layout(set=0, binding=0) uniform sampler2D heightmapTex;
+layout(set=0, binding=1) readonly buffer VisiblePatchBuffer { CdlodPatch visible[]; };
+layout(set=0, binding=2) readonly buffer MorphFactorBuffer  { float morphFactors[]; };
+layout(set=0, binding=3) writeonly buffer TerrainVertexBuf  { TerrainVertex verts[]; };
+layout(set=0, binding=4) buffer IndirectDrawBuf { DrawIndirectCommand draws[]; };
+
+layout(set=0, binding=5) uniform CdlodTessellationUBO {
+    float worldScale;
+    float heightScale;
+    int   patchSize;
+    int   texWidth;
+    int   texHeight;
+    float terrainSizeX;
+    float terrainSizeZ;
+    float pad;
+};
+
+void main() {
+    uint patchIdx = gl_GlobalInvocationID.z;
+    uint localX   = gl_GlobalInvocationID.x;
+    uint localZ   = gl_GlobalInvocationID.y;
+
+    if (localX >= uint(patchSize) || localZ >= uint(patchSize)) return;
+
+    CdlodPatch patch = visible[patchIdx];
+    float morph = morphFactors[patchIdx];
+
+    float step = patch.patchSize / float(patchSize - 1);
+    float wx = patch.worldX + float(localX) * step;
+    float wz = patch.worldZ + float(localZ) * step;
+
+    vec2 uv = vec2(wx / terrainSizeX, wz / terrainSizeZ);
+    float h = texture(heightmapTex, uv).r * heightScale;
+
+    float coarserStep = step * 2.0;
+    float snapX = floor(wx / coarserStep) * coarserStep;
+    float snapZ = floor(wz / coarserStep) * coarserStep;
+    vec2  snapUV = vec2(snapX / terrainSizeX, snapZ / terrainSizeZ);
+    float snapH  = texture(heightmapTex, snapUV).r * heightScale;
+    h = mix(h, snapH, morph);
+
+    float texStepU = 1.0 / float(texWidth);
+    float texStepV = 1.0 / float(texHeight);
+    float hL = texture(heightmapTex, uv + vec2(-texStepU, 0)).r * heightScale;
+    float hR = texture(heightmapTex, uv + vec2( texStepU, 0)).r * heightScale;
+    float hD = texture(heightmapTex, uv + vec2(0, -texStepV)).r * heightScale;
+    float hU = texture(heightmapTex, uv + vec2(0,  texStepV)).r * heightScale;
+    vec3 n = normalize(vec3(hL - hR, 2.0 * worldScale, hD - hU));
+
+    uint vertIdx = patchIdx * uint(patchSize * patchSize)
+                 + localZ * uint(patchSize) + localX;
+
+    verts[vertIdx].position   = vec3(wx, h, wz);
+    verts[vertIdx].pad0       = 0.0;
+    verts[vertIdx].normal     = n;
+    verts[vertIdx].pad1       = 0.0;
+    verts[vertIdx].uv         = uv;
+    verts[vertIdx].morphFactor= morph;
+    verts[vertIdx].pad2       = 0.0;
+
+    if (localX == 0u && localZ == 0u) {
+        draws[patchIdx].vertexCount    = uint(patchSize * patchSize);
+        draws[patchIdx].instanceCount  = 1u;
+        draws[patchIdx].firstVertex    = patchIdx * uint(patchSize * patchSize);
+        draws[patchIdx].firstInstance  = 0u;
+    }
+}
