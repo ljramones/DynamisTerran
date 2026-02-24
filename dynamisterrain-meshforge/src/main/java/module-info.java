@@ -1,7 +1,8 @@
 module org.dynamisterrain.meshforge {
     requires org.dynamisterrain.api;
     requires org.dynamisterrain.core;
-    requires org.meshforge;
+    // TODO: restore when MeshForge JPMS module is available
+    // requires org.meshforge;
     requires org.vectrix;
 
     exports org.dynamisterrain.meshforge;
