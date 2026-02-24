@@ -11,4 +11,5 @@ module org.dynamisterrain.vulkan {
     exports org.dynamisterrain.vulkan.lod;
     exports org.dynamisterrain.vulkan.horizon;
     exports org.dynamisterrain.vulkan.material;
+    exports org.dynamisterrain.vulkan.foliage;
 }

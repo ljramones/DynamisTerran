@@ -1,0 +1,59 @@
+#version 450
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+struct FoliageInstance {
+    vec3  worldPos;     float rotation;
+    float scale;        int   layerIndex;
+    float pad0, pad1;
+    vec3  bsCenter;     float bsRadius;
+};
+
+struct DrawIndirectCommand {
+    uint vertexCount, instanceCount, firstVertex, firstInstance;
+};
+
+layout(set=0, binding=0) readonly buffer  InstanceBuf  { FoliageInstance instances[]; };
+layout(set=0, binding=1) writeonly buffer VisibleBuf   { FoliageInstance visible[]; };
+layout(set=0, binding=2) buffer           DrawBuf      { DrawIndirectCommand draws[]; };
+layout(set=0, binding=3) buffer           CountBuf     { uint layerCounts[]; };
+layout(set=0, binding=4) uniform sampler2D hzbPyramid;
+
+layout(set=0, binding=5) uniform FoliageCullUBO {
+    vec3  cameraPos;     float maxDrawDistance;
+    vec2  hzbSize;       int   totalInstances;
+    int   layerCount;
+    vec4  frustumPlanes[4];
+};
+
+layout(push_constant) uniform PC {
+    vec4 frustumPlaneTop;
+    vec4 frustumPlaneBottom;
+};
+
+bool sphereInFrustum(vec3 center, float radius) {
+    for (int i = 0; i < 4; i++) {
+        if (dot(frustumPlanes[i].xyz, center) + frustumPlanes[i].w < -radius)
+            return false;
+    }
+    if (dot(frustumPlaneTop.xyz, center) + frustumPlaneTop.w < -radius) return false;
+    if (dot(frustumPlaneBottom.xyz, center) + frustumPlaneBottom.w < -radius) return false;
+    return true;
+}
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+    if (idx >= uint(totalInstances)) return;
+
+    FoliageInstance inst = instances[idx];
+    float dist = distance(cameraPos, inst.bsCenter);
+    if (dist > maxDrawDistance) return;
+    if (!sphereInFrustum(inst.bsCenter, inst.bsRadius)) return;
+
+    float lodAlpha = clamp(1.0 - (dist / maxDrawDistance), 0.0, 1.0);
+    inst.pad0 = lodAlpha;
+
+    uint slot = atomicAdd(layerCounts[inst.layerIndex], 1u);
+    uint globalSlot = atomicAdd(layerCounts[layerCount], 1u);
+    visible[globalSlot] = inst;
+    atomicAdd(draws[inst.layerIndex].instanceCount, 1u);
+}
