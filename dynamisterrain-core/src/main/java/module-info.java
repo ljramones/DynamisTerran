@@ -8,4 +8,6 @@ module org.dynamisterrain.core {
     exports org.dynamisterrain.core.flow;
     exports org.dynamisterrain.core.scatter;
     exports org.dynamisterrain.core.material;
+    exports org.dynamisterrain.core.procedural;
+    exports org.dynamisterrain.core.builder;
 }
