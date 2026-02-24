@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+           http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.dynamisterrain</groupId>
+  <artifactId>dynamisterrain-parent</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>DynamisTerrain — Parent</name>
+
+  <modules>
+    <module>dynamisterrain-api</module>
+    <module>dynamisterrain-core</module>
+    <module>dynamisterrain-vulkan</module>
+    <module>dynamisterrain-meshforge</module>
+    <module>dynamisterrain-physics</module>
+    <module>dynamisterrain-test</module>
+    <module>dynamisterrain-bench</module>
+  </modules>
+
+  <properties>
+    <java.version>25</java.version>
+    <maven.compiler.source>25</maven.compiler.source>
+    <maven.compiler.target>25</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- Ecosystem versions -->
+    <vectrix.version>1.10.10</vectrix.version>
+    <dynamisgpu.version>1.0.1</dynamisgpu.version>
+    <dynamissky.version>0.1.0-SNAPSHOT</dynamissky.version>
+    <dynamiscollision.version>1.1.0</dynamiscollision.version>
+    <dynamisphysics.version>0.1.0-SNAPSHOT</dynamisphysics.version>
+    <meshforge.version>1.1.0</meshforge.version>
+
+    <!-- LWJGL -->
+    <lwjgl.version>3.4.1</lwjgl.version>
+
+    <!-- Test -->
+    <junit.version>5.10.2</junit.version>
+
+    <!-- JMH -->
+    <jmh.version>1.37</jmh.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <!-- Internal modules -->
+      <dependency>
+        <groupId>org.dynamisterrain</groupId>
+        <artifactId>dynamisterrain-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.dynamisterrain</groupId>
+        <artifactId>dynamisterrain-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.dynamisterrain</groupId>
+        <artifactId>dynamisterrain-vulkan</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.dynamisterrain</groupId>
+        <artifactId>dynamisterrain-meshforge</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.dynamisterrain</groupId>
+        <artifactId>dynamisterrain-physics</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.dynamisterrain</groupId>
+        <artifactId>dynamisterrain-test</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- Ecosystem -->
+      <dependency>
+        <groupId>org.vectrix</groupId>
+        <artifactId>vectrix</artifactId>
+        <version>${vectrix.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.dynamisgpu</groupId>
+        <artifactId>dynamis-gpu-api</artifactId>
+        <version>${dynamisgpu.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.dynamisgpu</groupId>
+        <artifactId>dynamis-gpu-vulkan</artifactId>
+        <version>${dynamisgpu.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.dynamissky</groupId>
+        <artifactId>dynamissky-api</artifactId>
+        <version>${dynamissky.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.dynamissky</groupId>
+        <artifactId>dynamissky-vulkan</artifactId>
+        <version>${dynamissky.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.dynamiscollision</groupId>
+        <artifactId>dynamis-collision</artifactId>
+        <version>${dynamiscollision.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.dynamisphysics</groupId>
+        <artifactId>dynamisphysics-api</artifactId>
+        <version>${dynamisphysics.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.meshforge</groupId>
+        <artifactId>meshforge</artifactId>
+        <version>${meshforge.version}</version>
+      </dependency>
+
+      <!-- LWJGL BOM -->
+      <dependency>
+        <groupId>org.lwjgl</groupId>
+        <artifactId>lwjgl-bom</artifactId>
+        <version>${lwjgl.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- JUnit 5 -->
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter</artifactId>
+        <version>${junit.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <!-- JMH -->
+      <dependency>
+        <groupId>org.openjdk.jmh</groupId>
+        <artifactId>jmh-core</artifactId>
+        <version>${jmh.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.openjdk.jmh</groupId>
+        <artifactId>jmh-generator-annprocess</artifactId>
+        <version>${jmh.version}</version>
+        <scope>provided</scope>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
+          <configuration>
+            <source>25</source>
+            <target>25</target>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.2.5</version>
+          <configuration>
+            <useModulePath>false</useModulePath>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+</project>
