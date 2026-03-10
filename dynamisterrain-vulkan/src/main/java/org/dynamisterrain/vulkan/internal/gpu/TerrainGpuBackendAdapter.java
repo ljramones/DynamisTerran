@@ -1,12 +1,12 @@
 package org.dynamisterrain.vulkan.internal.gpu;
 
-import org.dynamisterrain.vulkan.TerrainGpuContext;
+import org.dynamisterrain.vulkan.GpuMemoryOps;
 
 /**
  * Internal anti-corruption seam for terrain GPU/backend interactions.
  *
- * This is intentionally internal and non-SPI in A1.
+ * This is intentionally internal and non-SPI in A2.
  */
 public interface TerrainGpuBackendAdapter {
-    void bindContext(TerrainGpuContext context);
+    long createSampler(GpuMemoryOps memoryOps);
 }

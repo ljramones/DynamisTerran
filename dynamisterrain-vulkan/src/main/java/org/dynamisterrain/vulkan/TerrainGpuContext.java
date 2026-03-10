@@ -8,9 +8,12 @@ import org.dynamisterrain.api.descriptor.TerrainDescriptor;
 import org.dynamisterrain.api.gpu.TerrainGpuResources;
 import org.dynamisterrain.core.flow.FlowMapData;
 import org.dynamisterrain.core.heightmap.HeightmapData;
+import org.dynamisterrain.vulkan.internal.gpu.NoopTerrainGpuBackendAdapter;
+import org.dynamisterrain.vulkan.internal.gpu.TerrainGpuBackendAdapter;
 
 public final class TerrainGpuContext {
     private final GpuMemoryOps memoryOps;
+    private final TerrainGpuBackendAdapter gpuBackendAdapter;
 
     private GpuImage2D heightmapTexture;
     private GpuImage2D normalMapTexture;
@@ -24,15 +27,28 @@ public final class TerrainGpuContext {
     private FlowMapData flowMapData;
     private float[] normalData;
 
-    private TerrainGpuContext(final GpuMemoryOps memoryOps) {
+    private TerrainGpuContext(final GpuMemoryOps memoryOps, final TerrainGpuBackendAdapter gpuBackendAdapter) {
         this.memoryOps = memoryOps;
+        this.gpuBackendAdapter = gpuBackendAdapter;
     }
 
     public static TerrainGpuContext allocate(final long device, final GpuMemoryOps memoryOps, final TerrainDescriptor descriptor) {
+        return allocate(device, memoryOps, descriptor, new NoopTerrainGpuBackendAdapter());
+    }
+
+    static TerrainGpuContext allocate(
+            final long device,
+            final GpuMemoryOps memoryOps,
+            final TerrainDescriptor descriptor,
+            final TerrainGpuBackendAdapter gpuBackendAdapter) {
         final int width = descriptor.heightmap().width();
         final int height = descriptor.heightmap().height();
 
-        final TerrainGpuContext ctx = new TerrainGpuContext(memoryOps);
+        final TerrainGpuBackendAdapter backendAdapter = gpuBackendAdapter == null
+                ? new NoopTerrainGpuBackendAdapter()
+                : gpuBackendAdapter;
+
+        final TerrainGpuContext ctx = new TerrainGpuContext(memoryOps, backendAdapter);
         final int hmBpp = descriptor.heightmap().format() == HeightmapFormat.R16 ? 2 : 4;
         ctx.heightmapTexture = memoryOps.createImage2D(width, height, hmBpp);
         ctx.normalMapTexture = memoryOps.createImage2D(width, height, 4);
@@ -42,7 +58,7 @@ public final class TerrainGpuContext {
         if (descriptor.splatmap() != null && descriptor.splatmap().mode() != SplatmapMode.LAYERS_4) {
             ctx.splatmap1Texture = memoryOps.createImage2D(width, height, 4);
         }
-        ctx.sampler = memoryOps.createSampler();
+        ctx.sampler = ctx.gpuBackendAdapter.createSampler(memoryOps);
         return ctx;
     }
 

@@ -1,6 +1,5 @@
 package org.dynamisterrain.api.service;
 
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 import org.dynamisterrain.api.config.MaterialTag;
@@ -18,18 +17,27 @@ import org.junit.jupiter.api.Test;
 
 class TerrainServiceTypedSkySeamTest {
     @Test
-    void typedSkySourceUsesLegacyCompatibilityPath() {
+    void legacyObjectPathAdaptsToTypedSourceWhenPossible() {
         CapturingTerrainService service = new CapturingTerrainService();
         TerrainSkyStateSource source = () -> TerrainSkyState.defaultState();
 
+        service.setSkySource(source);
+
+        assertSame(source, service.lastSkyStateSource);
+    }
+
+    @Test
+    void typedSkyPathIsPrimaryExecutionPath() {
+        CapturingTerrainService service = new CapturingTerrainService();
+        TerrainSkyStateSource source = () -> new TerrainSkyState(new Vector3f(0f, 1f, 0f), 0.8f);
+
         service.setSkyStateSource(source);
 
-        assertInstanceOf(TerrainSkyStateSource.class, service.lastSkySource);
-        assertSame(source, service.lastSkySource);
+        assertSame(source, service.lastSkyStateSource);
     }
 
     private static final class CapturingTerrainService implements TerrainService {
-        private Object lastSkySource;
+        private TerrainSkyStateSource lastSkyStateSource;
 
         @Override
         public TerrainHandle loadTile(TerrainDescriptor descriptor) {
@@ -89,8 +97,8 @@ class TerrainServiceTypedSkySeamTest {
         }
 
         @Override
-        public void setSkySource(Object skySource) {
-            this.lastSkySource = skySource;
+        public void setSkyStateSource(TerrainSkyStateSource skyStateSource) {
+            this.lastSkyStateSource = skyStateSource;
         }
 
         @Override

@@ -11,6 +11,7 @@ import org.dynamisterrain.api.event.MaterialPaintEvent;
 import org.dynamisterrain.api.event.SurfaceContactEvent;
 import org.dynamisterrain.api.gpu.TerrainGpuResources;
 import org.dynamisterrain.api.service.TerrainService;
+import org.dynamisterrain.api.service.TerrainSkyStateSource;
 import org.dynamisterrain.api.state.TerrainFrameContext;
 import org.dynamisterrain.api.state.TerrainHandle;
 import org.dynamisterrain.api.state.TerrainRenderPhase;
@@ -156,8 +157,13 @@ public final class MockTerrainService implements TerrainService {
     }
 
     @Override
-    public void setSkySource(final Object skySource) {
+    public void setSkyStateSource(final TerrainSkyStateSource skyStateSource) {
         // no-op in mock
+    }
+
+    
+    public void setSkySource(final Object skySource) {
+        TerrainService.super.setSkySource(skySource);
     }
 
     @Override
