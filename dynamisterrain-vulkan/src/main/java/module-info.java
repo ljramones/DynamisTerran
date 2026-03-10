@@ -8,9 +8,4 @@ module org.dynamisterrain.vulkan {
     requires org.lwjgl.vulkan;
 
     exports org.dynamisterrain.vulkan;
-    exports org.dynamisterrain.vulkan.lod;
-    exports org.dynamisterrain.vulkan.horizon;
-    exports org.dynamisterrain.vulkan.material;
-    exports org.dynamisterrain.vulkan.foliage;
-    exports org.dynamisterrain.vulkan.water;
 }
