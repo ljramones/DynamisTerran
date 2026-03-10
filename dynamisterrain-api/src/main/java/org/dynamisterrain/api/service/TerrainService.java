@@ -38,6 +38,17 @@ public interface TerrainService {
 
     void stampHeight(HeightStamp stamp, int centerX, int centerZ);
 
+    /**
+     * Typed Terrain/Sky seam for new integration code.
+     */
+    default void setSkyStateSource(TerrainSkyStateSource skyStateSource) {
+        setSkySource(skyStateSource);
+    }
+
+    /**
+     * Legacy weakly typed compatibility path. Prefer {@link #setSkyStateSource(TerrainSkyStateSource)}.
+     */
+    @Deprecated(since = "0.1.0")
     void setSkySource(Object skySource);
 
     TerrainStats getStats();
