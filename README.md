@@ -174,14 +174,14 @@ Horizon map bake (`horizon_map_bake.comp`) runs once at tile load. For each texe
 ```xml
 <!-- API only (game logic layer) -->
 <dependency>
-  <groupId>org.dynamisterrain</groupId>
+  <groupId>org.dynamisengine.terrain</groupId>
   <artifactId>dynamisterrain-api</artifactId>
   <version>0.1.0</version>
 </dependency>
 
 <!-- Full Vulkan renderer (engine layer) -->
 <dependency>
-  <groupId>org.dynamisterrain</groupId>
+  <groupId>org.dynamisengine.terrain</groupId>
   <artifactId>dynamisterrain-vulkan</artifactId>
   <version>0.1.0</version>
 </dependency>

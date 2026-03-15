@@ -1,9 +1,9 @@
-module org.dynamisterrain.api {
-    exports org.dynamisterrain.api;
-    exports org.dynamisterrain.api.service;
-    exports org.dynamisterrain.api.descriptor;
-    exports org.dynamisterrain.api.state;
-    exports org.dynamisterrain.api.event;
-    exports org.dynamisterrain.api.gpu;
-    exports org.dynamisterrain.api.config;
+module org.dynamisengine.terrain.api {
+    exports org.dynamisengine.terrain.api;
+    exports org.dynamisengine.terrain.api.service;
+    exports org.dynamisengine.terrain.api.descriptor;
+    exports org.dynamisengine.terrain.api.state;
+    exports org.dynamisengine.terrain.api.event;
+    exports org.dynamisengine.terrain.api.gpu;
+    exports org.dynamisengine.terrain.api.config;
 }

@@ -1,13 +1,13 @@
-module org.dynamisterrain.core {
-    requires org.dynamisterrain.api;
-    requires org.vectrix;
+module org.dynamisengine.terrain.core {
+    requires org.dynamisengine.terrain.api;
+    requires org.dynamisengine.vectrix;
 
-    exports org.dynamisterrain.core;
-    exports org.dynamisterrain.core.heightmap;
-    exports org.dynamisterrain.core.lod;
-    exports org.dynamisterrain.core.flow;
-    exports org.dynamisterrain.core.scatter;
-    exports org.dynamisterrain.core.material;
-    exports org.dynamisterrain.core.procedural;
-    exports org.dynamisterrain.core.builder;
+    exports org.dynamisengine.terrain.core;
+    exports org.dynamisengine.terrain.core.heightmap;
+    exports org.dynamisengine.terrain.core.lod;
+    exports org.dynamisengine.terrain.core.flow;
+    exports org.dynamisengine.terrain.core.scatter;
+    exports org.dynamisengine.terrain.core.material;
+    exports org.dynamisengine.terrain.core.procedural;
+    exports org.dynamisengine.terrain.core.builder;
 }
