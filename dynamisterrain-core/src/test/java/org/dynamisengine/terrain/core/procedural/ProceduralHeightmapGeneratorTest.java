@@ -118,6 +118,56 @@ class ProceduralHeightmapGeneratorTest {
         return center - n;
     }
 
+    @Test
+    void largerResolutionProducesMoreSamples() {
+        final HeightmapData small = ProceduralHeightmapGenerator.generate(desc(42, 6, 0, 0, List.of()), 32, 32, 800f);
+        final HeightmapData large = ProceduralHeightmapGenerator.generate(desc(42, 6, 0, 0, List.of()), 128, 128, 800f);
+        assertTrue(large.pixels().length > small.pixels().length);
+        assertEquals(32 * 32, small.pixels().length);
+        assertEquals(128 * 128, large.pixels().length);
+    }
+
+    @Test
+    void erosionPassesSmoothTerrain() {
+        final HeightmapData noErosion = ProceduralHeightmapGenerator.generate(desc(42, 6, 0, 0, List.of()), 64, 64, 800f);
+        final HeightmapData withErosion = ProceduralHeightmapGenerator.generate(desc(42, 6, 30, 0, List.of()), 64, 64, 800f);
+        assertTrue(variance(withErosion.pixels()) < variance(noErosion.pixels()),
+            "Erosion should reduce height variance");
+    }
+
+    @Test
+    void edgeValuesAreValid() {
+        final HeightmapData hm = ProceduralHeightmapGenerator.generate(desc(42, 6, 10, 5, List.of()), 64, 64, 800f);
+        final int w = hm.width();
+        final int h = hm.height();
+        for (int x = 0; x < w; x++) {
+            assertFinite(hm.pixelAt(x, 0));
+            assertFinite(hm.pixelAt(x, h - 1));
+        }
+        for (int z = 0; z < h; z++) {
+            assertFinite(hm.pixelAt(0, z));
+            assertFinite(hm.pixelAt(w - 1, z));
+        }
+        assertFinite(hm.pixelAt(0, 0));
+        assertFinite(hm.pixelAt(w - 1, 0));
+        assertFinite(hm.pixelAt(0, h - 1));
+        assertFinite(hm.pixelAt(w - 1, h - 1));
+    }
+
+    private static void assertFinite(final float v) {
+        assertTrue(Float.isFinite(v), "Expected finite value but got " + v);
+    }
+
+    private static float variance(final float[] data) {
+        final float m = mean(data);
+        float var = 0f;
+        for (float v : data) {
+            final float d = v - m;
+            var += d * d;
+        }
+        return var / data.length;
+    }
+
     private static float meanSlope(final HeightmapData hm) {
         float sum = 0f;
         int count = 0;

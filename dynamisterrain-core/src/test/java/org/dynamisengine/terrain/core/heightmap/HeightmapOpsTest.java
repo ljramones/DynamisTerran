@@ -105,6 +105,88 @@ class HeightmapOpsTest {
     }
 
     @Test
+    void heightAtBilinearInterpolatesMidpoint() {
+        final float[] data = new float[4 * 4];
+        for (int z = 0; z < 4; z++) {
+            for (int x = 0; x < 4; x++) {
+                data[z * 4 + x] = x + z;
+            }
+        }
+        final HeightmapData hm = HeightmapData.ofR32F(data, 4, 4);
+        final float h = HeightmapOps.heightAt(hm, 1.5f, 1.5f, 1.0f, 1.0f);
+        assertEquals(3.0f, h, 0.01f);
+    }
+
+    @Test
+    void normalsAreUnitVectors() {
+        final float[] data = new float[16 * 16];
+        for (int z = 0; z < 16; z++) {
+            for (int x = 0; x < 16; x++) {
+                data[z * 16 + x] = (float) Math.sin(x * 0.5f) * 10f + z * 2f;
+            }
+        }
+        final HeightmapData hm = HeightmapData.ofR32F(data, 16, 16);
+        final float[] normals = HeightmapOps.generateNormals(hm, 1.0f, 1.0f);
+        for (int i = 0; i < normals.length; i += 3) {
+            final float len = (float) Math.sqrt(
+                normals[i] * normals[i] + normals[i + 1] * normals[i + 1] + normals[i + 2] * normals[i + 2]);
+            assertEquals(1.0f, len, 0.01f, "Normal at index " + (i / 3) + " is not unit length: " + len);
+        }
+    }
+
+    @Test
+    void stampBlendModeLerpsCorrectly() {
+        final HeightmapData hm = HeightmapData.empty(16, 16);
+        hm.setPixel(8, 8, 10.0f);
+        final HeightmapData stamp = HeightmapData.ofR32F(new float[] {20f, 20f, 20f, 20f}, 2, 2);
+        HeightmapOps.applyStamp(hm, stamp, BlendMode.BLEND, 0.5f, 8, 8);
+        assertEquals(15.0f, hm.pixelAt(8, 8), 0.01f);
+    }
+
+    @Test
+    void deformRespectsHeightmapBounds() {
+        final HeightmapData hm = HeightmapData.empty(16, 16);
+        assertDoesNotThrow(() -> HeightmapOps.deform(
+            hm, new HeightDeformEvent(0.0f, 0.0f, 10.0f, 5.0f, DeformShape.SPHERE), 1.0f));
+        assertDoesNotThrow(() -> HeightmapOps.deform(
+            hm, new HeightDeformEvent(15.0f, 15.0f, 10.0f, 5.0f, DeformShape.SPHERE), 1.0f));
+    }
+
+    @Test
+    void deformConeShape() {
+        final HeightmapData hm = HeightmapData.empty(32, 32);
+        HeightmapOps.deform(hm, new HeightDeformEvent(16.0f, 16.0f, 6.0f, 10.0f, DeformShape.CONE), 1.0f);
+        assertTrue(hm.pixelAt(16, 16) < 0.0f, "Center should be depressed");
+        assertTrue(hm.pixelAt(16, 16) < hm.pixelAt(19, 16), "Center deeper than edge");
+    }
+
+    @Test
+    void deformExplosionShape() {
+        final HeightmapData hm = HeightmapData.empty(32, 32);
+        HeightmapOps.deform(hm, new HeightDeformEvent(16.0f, 16.0f, 8.0f, 10.0f, DeformShape.EXPLOSION), 1.0f);
+        assertTrue(hm.pixelAt(16, 16) < 0.0f, "Center should be depressed");
+    }
+
+    @Test
+    void edgeCornerInterpolationInBounds() {
+        final HeightmapData hm = HeightmapData.empty(8, 8);
+        hm.setPixel(0, 0, 5.0f);
+        hm.setPixel(7, 7, 10.0f);
+        assertDoesNotThrow(() -> HeightmapOps.heightAt(hm, -1.0f, -1.0f, 1.0f, 1.0f));
+        assertDoesNotThrow(() -> HeightmapOps.heightAt(hm, 100.0f, 100.0f, 1.0f, 1.0f));
+        assertEquals(5.0f, HeightmapOps.heightAt(hm, 0.0f, 0.0f, 1.0f, 1.0f), 0.001f);
+        assertEquals(10.0f, HeightmapOps.heightAt(hm, 7.0f, 7.0f, 1.0f, 1.0f), 0.001f);
+    }
+
+    @Test
+    void stampAtEdgeDoesNotThrow() {
+        final HeightmapData hm = HeightmapData.empty(16, 16);
+        final HeightmapData stamp = HeightmapData.ofR32F(new float[] {5f, 5f, 5f, 5f, 5f, 5f, 5f, 5f, 5f}, 3, 3);
+        assertDoesNotThrow(() -> HeightmapOps.applyStamp(hm, stamp, BlendMode.ADD, 1.0f, 0, 0));
+        assertDoesNotThrow(() -> HeightmapOps.applyStamp(hm, stamp, BlendMode.ADD, 1.0f, 15, 15));
+    }
+
+    @Test
     void minMaxSingleTexel() {
         final HeightmapData hm = HeightmapData.empty(4, 4);
         hm.setPixel(3, 3, 42.0f);
