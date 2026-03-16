@@ -32,7 +32,7 @@
     <dynamisgpu.version>1.0.1</dynamisgpu.version>
     <dynamissky.version>0.1.0-SNAPSHOT</dynamissky.version>
     <dynamiscollision.version>1.1.0</dynamiscollision.version>
-    <dynamisphysics.version>0.1.0-SNAPSHOT</dynamisphysics.version>
+    <dynamisphysics.version>0.3.1-SNAPSHOT</dynamisphysics.version>
     <meshforge.version>1.1.0</meshforge.version>
 
     <!-- LWJGL -->
@@ -108,7 +108,7 @@
       </dependency>
       <dependency>
         <groupId>org.dynamiscollision</groupId>
-        <artifactId>dynamis-collision</artifactId>
+        <artifactId>collision_detection</artifactId>
         <version>${dynamiscollision.version}</version>
       </dependency>
       <dependency>
