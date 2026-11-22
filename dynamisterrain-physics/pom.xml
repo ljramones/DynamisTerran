@@ -19,11 +19,11 @@
       <artifactId>dynamisterrain-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.dynamiscollision</groupId>
+      <groupId>org.dynamisengine.collision</groupId>
       <artifactId>collision_detection</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.dynamisphysics</groupId>
+      <groupId>org.dynamisengine.physics</groupId>
       <artifactId>dynamisphysics-api</artifactId>
     </dependency>
     <dependency>

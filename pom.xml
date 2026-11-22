@@ -31,7 +31,7 @@
     <vectrix.version>1.10.13</vectrix.version>
     <dynamisgpu.version>1.0.1</dynamisgpu.version>
     <dynamissky.version>0.1.0-SNAPSHOT</dynamissky.version>
-    <dynamiscollision.version>1.1.0</dynamiscollision.version>
+    <dynamiscollision.version>1.1.1</dynamiscollision.version>
     <dynamisphysics.version>0.3.1-SNAPSHOT</dynamisphysics.version>
     <meshforge.version>1.1.0</meshforge.version>
 
@@ -87,32 +87,32 @@
         <version>${vectrix.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.dynamisgpu</groupId>
+        <groupId>org.dynamisengine</groupId>
         <artifactId>dynamis-gpu-api</artifactId>
         <version>${dynamisgpu.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.dynamisgpu</groupId>
+        <groupId>org.dynamisengine</groupId>
         <artifactId>dynamis-gpu-vulkan</artifactId>
         <version>${dynamisgpu.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.dynamissky</groupId>
+        <groupId>org.dynamisengine.sky</groupId>
         <artifactId>dynamissky-api</artifactId>
         <version>${dynamissky.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.dynamissky</groupId>
+        <groupId>org.dynamisengine.sky</groupId>
         <artifactId>dynamissky-vulkan</artifactId>
         <version>${dynamissky.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.dynamiscollision</groupId>
+        <groupId>org.dynamisengine.collision</groupId>
         <artifactId>collision_detection</artifactId>
         <version>${dynamiscollision.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.dynamisphysics</groupId>
+        <groupId>org.dynamisengine.physics</groupId>
         <artifactId>dynamisphysics-api</artifactId>
         <version>${dynamisphysics.version}</version>
       </dependency>
@@ -161,7 +161,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.13.0</version>
+          <version>3.14.1</version>
           <configuration>
             <source>25</source>
             <target>25</target>

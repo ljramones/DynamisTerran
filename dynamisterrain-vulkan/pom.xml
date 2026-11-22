@@ -19,19 +19,19 @@
       <artifactId>dynamisterrain-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.dynamisgpu</groupId>
+      <groupId>org.dynamisengine</groupId>
       <artifactId>dynamis-gpu-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.dynamisgpu</groupId>
+      <groupId>org.dynamisengine</groupId>
       <artifactId>dynamis-gpu-vulkan</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.dynamissky</groupId>
+      <groupId>org.dynamisengine.sky</groupId>
       <artifactId>dynamissky-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.dynamissky</groupId>
+      <groupId>org.dynamisengine.sky</groupId>
       <artifactId>dynamissky-vulkan</artifactId>
     </dependency>
     <dependency>
